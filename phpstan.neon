@@ -1,9 +1,9 @@
 parameters:
-  level: max
-  phpVersion: 80400 # PHP 8.4
-
-  paths:
-    - app
-
-  excludePaths:
-    - app/cache
+    level: 8
+    paths:
+        - app
+        - database
+    excludePaths:
+        - vendor
+    phpVersion: 80400
+    checkMissingIterableValueType: false

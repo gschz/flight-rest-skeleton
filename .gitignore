@@ -8,3 +8,19 @@ vendor/
 /.phpunit.cache/
 /tests/phpunit/.phpunit.result.cache
 /app/cache/
+
+# Config with credentials
+app/config/config.php
+
+# Local env files (not examples)
+.envs/.env.local
+.envs/.env.pg.local
+.envs/.env.production
+
+# Database files
+database/database.sqlite
+database/*.sqlite
+
+# Logs
+app/log/*.log
+app/log/
