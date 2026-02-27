@@ -1,0 +1,26 @@
+{
+  // --- General Settings ---
+  "editor.wordWrap": "bounded",
+  "editor.formatOnSave": true, // Apply format on save for all files
+  "editor.rulers": [140],
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true,
+
+  // --- Language-Specific Formatters ---
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  },
+
+  // --- File Explorer Settings ---
+  "explorer.compactFolders": false,
+
+  // --- PHP Intelephense Settings ---
+  "intelephense.format.enable": true,
+  "intelephense.format.braces": "per",
+  "php.suggest.basic": false,
+  "intelephense.files.maxSize": 5000000,
+  "intelephense.environment.phpVersion": "8.4",
+  "intelephense.completion.fullyQualifyGlobalConstantsAndFunctions": true,
+  "intelephense.completion.insertUseDeclaration": true,
+  "intelephense.trace.server": "messages"
+}
