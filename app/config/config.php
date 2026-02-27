@@ -4,103 +4,105 @@ declare(strict_types=1);
 
 use flight\Engine;
 
-/**********************************************
- *      FlightPHP Skeleton Sample Config      *
- **********************************************
+/**
+ * FlightPHP Config
  *
- * Copy this file to config.php and update values as needed.
- * All settings are required unless marked as optional.
+ * This file reads all sensitive values from environment variables.
+ * Set them in your shell, in a .env file loaded externally, or via
+ * your platform's config panel (Heroku, Railway, etc.).
  *
- * Example:
- *   cp app/config/config_sample.php app/config/config.php
+ * For local development, create a .envs/.env.local file and load it
+ * before starting the server (see composer scripts).
  *
- * This file is NOT tracked by git. Store sensitive credentials here.
- **********************************************/
+ * DO NOT hardcode credentials here. This file is git-ignored.
+ * See config_sample.php for the template and .env.example for variables.
+ */
 
-/**********************************************
- *         Application Environment            *
- **********************************************/
-// Set your timezone (e.g., 'America/New_York', 'UTC')
 date_default_timezone_set('UTC');
-
-// Error reporting level (E_ALL recommended for development)
 error_reporting(E_ALL);
 
-// Character encoding
 if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
 
-// Default Locale Change as needed or feel free to remove.
-if (function_exists('setlocale')) {
-    setlocale(LC_ALL, 'en_US.UTF-8');
-}
-
-/**********************************************
- *           FlightPHP Core Settings          *
- **********************************************/
-
-// Get the $app var to use below
+/** @var Engine<object> $app */
 if (!isset($app) || !$app instanceof Engine) {
     $app = Flight::app();
 }
 
-// Refer to this constant to get the project root directory
 define('PROJECT_ROOT', __DIR__ . '/../..');
-
-// This autoloads your code in the app directory so you don't have to require_once everything
-// You'll need to namespace your classes with "app\folder\" to include them properly
 $app->path(PROJECT_ROOT);
 
-// Core config variables
-$app->set('flight.base_url', '/', );           // Base URL for your app. Change if app is in a subdirectory (e.g., '/myapp/')
-$app->set('flight.case_sensitive', false);    // Set true for case sensitive routes. Default: false
-$app->set('flight.log_errors', true);         // Log errors to file. Recommended: true in production
-$app->set('flight.handle_errors', false);     // Let Tracy handle errors if false. Set true to use Flight's error handler
-$app->set('flight.views.path', PROJECT_ROOT . '/app/views'); // Path to views/templates
-$app->set('flight.views.extension', '.php');  // View file extension (e.g., '.php', '.latte')
-$app->set('flight.content_length', false);    // Send content length header. Usually false unless required by proxy
+$appEnv = (string)(getenv('APP_ENV') ?: 'development');
+define('APP_ENV', $appEnv);
+define('IS_PRODUCTION', $appEnv === 'production');
+define('IS_DEVELOPMENT', $appEnv === 'development');
+define('IS_TESTING', $appEnv === 'testing');
 
-// Generate a CSP nonce for each request and store in $app
-$nonce = bin2hex(random_bytes(16));
-$app->set('csp_nonce', $nonce);
+$app->set('flight.base_url', '/');
+$app->set('flight.case_sensitive', false);
+$app->set('flight.log_errors', true);
+$app->set('flight.handle_errors', IS_PRODUCTION);
+$app->set('flight.content_length', false);
 
-/**********************************************
- *           User Configuration               *
- **********************************************/
+/**
+ * Database configuration — reads from environment variables.
+ *
+ * Multi-environment strategy:
+ *   - DB_CONNECTION=sqlite  → local development (fast, no server needed)
+ *   - DB_CONNECTION=pgsql   → staging / production (PostgreSQL)
+ *
+ * For SQLite: set DB_DATABASE to the path of the .sqlite file, or leave
+ *   empty to default to database/database.sqlite
+ * For PostgreSQL: set DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+ *   or set DB_URL with a full DSN (e.g. Heroku DATABASE_URL).
+ */
+$dbConnection = (string)(getenv('DB_CONNECTION') ?: 'sqlite');
 
-// When you `return` an array here, and then include this file elsewhere,
-// you'll get this array back for your configuration settings.
-// $config = include PROJECT_ROOT .'/app/config/config.php';
+// Support Heroku-style DATABASE_URL
+$dbUrl = (string)(getenv('DATABASE_URL') ?: '');
+if ($dbUrl !== '' && $dbConnection === 'pgsql') {
+    $parsed      = parse_url($dbUrl);
+    $dbConfig    = [
+        'driver'   => 'pgsql',
+        'host'     => (string)($parsed['host'] ?? '127.0.0.1'),
+        'port'     => (int)($parsed['port'] ?? 5432),
+        'database' => ltrim((string)($parsed['path'] ?? 'app'), '/'),
+        'username' => (string)($parsed['user'] ?? ''),
+        'password' => (string)($parsed['pass'] ?? ''),
+        'charset'  => 'utf8',
+        'sslmode'  => 'require',
+    ];
+} elseif ($dbConnection === 'pgsql') {
+    $dbConfig = [
+        'driver'   => 'pgsql',
+        'host'     => (string)(getenv('DB_HOST') ?: '127.0.0.1'),
+        'port'     => (int)(getenv('DB_PORT') ?: 5432),
+        'database' => (string)(getenv('DB_DATABASE') ?: 'app'),
+        'username' => (string)(getenv('DB_USERNAME') ?: 'postgres'),
+        'password' => (string)(getenv('DB_PASSWORD') ?: ''),
+        'charset'  => 'utf8',
+        'sslmode'  => (string)(getenv('DB_SSLMODE') ?: 'prefer'),
+    ];
+} else {
+    // SQLite (default for local development)
+    $dbConfig = [
+        'driver'   => 'sqlite',
+        'database' => (string)(getenv('DB_DATABASE') ?: PROJECT_ROOT . '/database/database.sqlite'),
+        'prefix'   => '',
+        'foreign_key_constraints' => true,
+    ];
+}
+
 return [
-    /**************************************
-     *         Database Settings          *
-     **************************************/
-    'database' => [
-        // MySQL Example:
-        // 'host'     => 'localhost',      // Database host (e.g., 'localhost', 'db.example.com')
-        // 'dbname'   => 'your_db_name',   // Database name (e.g., 'flightphp')
-        // 'user'     => 'your_username',  // Database user (e.g., 'root')
-        // 'password' => 'your_password',  // Database password (never commit real passwords)
-
-        // SQLite Example:
-        // 'file_path' => __DIR__ . $ds . '..' . $ds . 'database.sqlite', // Path to SQLite file
+    'app' => [
+        'env'   => $appEnv,
+        'debug' => (bool)(getenv('APP_DEBUG') ?: !IS_PRODUCTION),
+        'key'   => (string)(getenv('APP_KEY') ?: ''),
     ],
-
-    /**************************************
-     *        Runway Settings             *
-     **************************************/
+    'database' => array_merge(['connection' => $dbConnection], $dbConfig),
     'runway' => [
-        'index_root' => "public/index.php",
-        'app_root' => "app/"
-    ]
-
-    // Google OAuth Credentials
-    // 'google_oauth' => [
-    //     'client_id'     => 'your_client_id',     // Google API client ID
-    //     'client_secret' => 'your_client_secret', // Google API client secret
-    //     'redirect_uri'  => 'your_redirect_uri',  // Redirect URI for OAuth callback
-    // ],
-
-    // Add more configuration sections below as needed
+        'index_root' => 'public/index.php',
+        'app_root'   => 'app/',
+    ],
 ];

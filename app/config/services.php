@@ -6,10 +6,13 @@ use flight\Engine;
 use flight\database\PdoWrapper;
 use flight\debug\database\PdoQueryCapture;
 use flight\debug\tracy\TracyExtensionLoader;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Events\Dispatcher;
 use Tracy\Debugger;
 
 $ds = DIRECTORY_SEPARATOR;
 
+/** @var Engine<object> $app */
 if (!isset($app) || !$app instanceof Engine) {
     $app = Flight::app();
 }
@@ -17,95 +20,45 @@ if (!isset($app) || !$app instanceof Engine) {
 /** @var array<string, mixed> $config */
 $config = is_array($config ?? null) ? $config : [];
 
-/*********************************************
- *         FlightPHP Service Setup           *
- *********************************************
- * This file registers services and integrations
- * for your FlightPHP application. Edit as needed.
- *
- * @var array<string, mixed> $config  From config.php
- * @var Engine<object> $app           FlightPHP app instance
- **********************************************/
+// ── Tracy Debugger ────────────────────────────────────────────────────────────
+if (IS_DEVELOPMENT && PHP_SAPI !== 'cli') {
+    Debugger::enable(Debugger::Development);
+    Debugger::$strictMode = E_ALL & ~E_DEPRECATED;
+    if (Debugger::$showBar) {
+        (new TracyExtensionLoader($app));
+    }
+} else {
+    Debugger::enable(Debugger::Production);
+}
+Debugger::$logDirectory = PROJECT_ROOT . $ds . 'app' . $ds . 'log';
 
-/*********************************************
- *           Session Service Setup           *
- *********************************************
- * To enable sessions in FlightPHP, register the session service.
- * Docs: https://docs.flightphp.com/awesome-plugins/session
- *
- * Example:
- *   $app->register('session', \flight\Session::class, [
- *       [
- *           'prefix' 		=> 'flight_session_', 	  // Prefix for the session cookie
- *           'save_path'    => 'path/to/my/sessions', // Path to save session files
- *           // ...other options...
- *       ]
- *   ]);
- *
- * For advanced options, see the plugin documentation above.
- **********************************************/
+// ── Eloquent ORM ──────────────────────────────────────────────────────────────
+/** @var array<string, mixed> $dbConfig */
+$dbConfig = is_array($config['database'] ?? null) ? $config['database'] : [];
 
-/*********************************************
- *           Tracy Debugger Setup            *
- *********************************************
- * Tracy is a powerful error handler and debugger for PHP.
- * Docs: https://tracy.nette.org/
- *
- * Key Tracy configuration options:
- *   - Debugger::enable([mode], [ip]);
- *       - mode: Debugger::Development or Debugger::Production
- *       - ip: restrict debug bar to specific IP(s)
- *   - Debugger::$logDirectory: where error logs are stored
- *   - Debugger::$strictMode: show all errors (true/E_ALL), or filter out deprecated notices
- *   - Debugger::$showBar: show/hide debug bar (auto-detected, can be forced)
- *   - Debugger::$maxLen: max length of dumped variables
- *   - Debugger::$maxDepth: max depth of dumped structures
- *   - Debugger::$editor: configure clickable file links (see docs)
- *   - Debugger::$email: send error notifications to email
- *
- * Example Tracy setups:
- *   Debugger::enable(); // Auto-detects environment
- *   Debugger::enable(Debugger::Development); // Explicitly set environment
- *   Debugger::enable('23.75.345.200'); // Restrict debug bar to specific IPs
- *
- * For more options, see https://tracy.nette.org/en/configuration
- **********************************************/
-Debugger::enable(); // Auto-detects environment
-// Debugger::enable(Debugger::Development); // Explicitly set environment
-// Debugger::enable('23.75.345.200'); // Restrict debug bar to specific IPs
-Debugger::$logDirectory = __DIR__ . $ds . '..' . $ds . 'log'; // Log directory
-Debugger::$strictMode = true; // Show all errors (set to E_ALL & ~E_DEPRECATED for less noise)
-// Debugger::$maxLen = 1000; // Max length of dumped variables (default: 150)
-// Debugger::$maxDepth = 5; // Max depth of dumped structures (default: 3)
-// Debugger::$editor = 'vscode'; // Enable clickable file links in debug bar
-// Debugger::$email = 'your@email.com'; // Send error notifications
-if (Debugger::$showBar && PHP_SAPI !== 'cli') {
-    (new TracyExtensionLoader($app)); // Load FlightPHP Tracy extensions
+$capsule = new Capsule();
+$capsule->addConnection($dbConfig);
+$capsule->setEventDispatcher(new Dispatcher());
+$capsule->setAsGlobal();
+$capsule->bootEloquent();
+
+// ── Flight PdoWrapper (for raw queries via Flight::db()) ──────────────────────
+// Build a PDO DSN from the same config so Flight::db() still works alongside Eloquent.
+$driver = $dbConfig['driver'] ?? 'sqlite';
+if ($driver === 'pgsql') {
+    $pdoDsn = sprintf(
+        'pgsql:host=%s;port=%d;dbname=%s',
+        $dbConfig['host'] ?? '127.0.0.1',
+        (int)($dbConfig['port'] ?? 5432),
+        $dbConfig['database'] ?? 'app'
+    );
+    $pdoUser     = $dbConfig['username'] ?? null;
+    $pdoPassword = $dbConfig['password'] ?? null;
+} else {
+    $pdoDsn      = 'sqlite:' . ($dbConfig['database'] ?? PROJECT_ROOT . '/database/database.sqlite');
+    $pdoUser     = null;
+    $pdoPassword = null;
 }
 
-/**********************************************
- *           Database Service Setup           *
- **********************************************/
-// Uncomment and configure the following for your database:
-
-// MySQL Example:
-// $dsn = 'mysql:host=' . $config['database']['host'] . ';dbname=' . $config['database']['dbname'] . ';charset=utf8mb4';
-
-// SQLite Example:
-// $dsn = 'sqlite:' . $config['database']['file_path'];
-
-// Register Flight::db() service
-// In development, use PdoQueryCapture to log queries; in production, use PdoWrapper for performance.
-// $pdoClass = Debugger::$showBar === true ? PdoQueryCapture::class : PdoWrapper::class;
-// $app->register('db', $pdoClass, [ $dsn, $config['database']['user'] ?? null, $config['database']['password'] ?? null ]);
-
-/**********************************************
- *         Third-Party Integrations           *
- **********************************************/
-// Google OAuth Example:
-// $app->register('google_oauth', Google_Client::class, [ $config['google_oauth'] ]);
-
-// Redis Example:
-// $app->register('redis', Redis::class, [ $config['redis']['host'], $config['redis']['port'] ]);
-
-// Add more service registrations below as needed
+$pdoClass = (IS_DEVELOPMENT && Debugger::$showBar && PHP_SAPI !== 'cli') ? PdoQueryCapture::class : PdoWrapper::class;
+$app->register('db', $pdoClass, [$pdoDsn, $pdoUser, $pdoPassword]);

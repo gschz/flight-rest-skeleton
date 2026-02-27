@@ -19,8 +19,11 @@
   "require": {
     "php": "^8.4",
     "ext-json": "*",
+    "ext-pdo": "*",
     "flightphp/core": "^3.0",
     "flightphp/runway": "^1.1",
+    "illuminate/database": "^11.0 || ^12.0",
+    "illuminate/events": "^11.0 || ^12.0",
     "tracy/tracy": "^2.9"
   },
   "require-dev": {
@@ -28,7 +31,8 @@
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^11",
     "friendsofphp/php-cs-fixer": "^3.64",
-    "flightphp/tracy-extensions": "^0.2"
+    "flightphp/tracy-extensions": "^0.2",
+    "robmorgan/phinx": "^0.16"
   },
   "autoload": {
     "psr-4": {
@@ -37,6 +41,11 @@
   },
   "scripts": {
     "start": "php -S localhost:8000 -t public",
+    "start:pg": "APP_ENV=development DB_CONNECTION=pgsql php -S localhost:8000 -t public",
+    "db:migrate": "vendor/bin/phinx migrate -c phinx.php",
+    "db:migrate:test": "vendor/bin/phinx migrate -c phinx.php -e testing",
+    "db:rollback": "vendor/bin/phinx rollback -c phinx.php",
+    "db:seed": "vendor/bin/phinx seed:run -c phinx.php",
     "test:unit": "vendor/bin/phpunit -c tests/phpunit/phpunit.xml --testdox",
     "test:stan": "vendor/bin/phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
     "rector:dry": "vendor/bin/rector --dry-run --clear-cache",
