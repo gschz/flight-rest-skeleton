@@ -1,10 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 use flight\Engine;
 use flight\database\PdoWrapper;
 use flight\debug\database\PdoQueryCapture;
 use flight\debug\tracy\TracyExtensionLoader;
 use Tracy\Debugger;
+
+$ds = DIRECTORY_SEPARATOR;
+
+if (!isset($app) || !$app instanceof Engine) {
+    $app = Flight::app();
+}
+
+/** @var array<string, mixed> $config */
+$config = is_array($config ?? null) ? $config : [];
 
 /*********************************************
  *         FlightPHP Service Setup           *
@@ -12,11 +23,9 @@ use Tracy\Debugger;
  * This file registers services and integrations
  * for your FlightPHP application. Edit as needed.
  *
- * @var array  $config  From config.php
- * @var Engine $app     FlightPHP app instance
+ * @var array<string, mixed> $config  From config.php
+ * @var Engine<object> $app           FlightPHP app instance
  **********************************************/
-
-
 
 /*********************************************
  *           Session Service Setup           *
@@ -71,7 +80,7 @@ Debugger::$strictMode = true; // Show all errors (set to E_ALL & ~E_DEPRECATED f
 // Debugger::$editor = 'vscode'; // Enable clickable file links in debug bar
 // Debugger::$email = 'your@email.com'; // Send error notifications
 if (Debugger::$showBar && PHP_SAPI !== 'cli') {
-	(new TracyExtensionLoader($app)); // Load FlightPHP Tracy extensions
+    (new TracyExtensionLoader($app)); // Load FlightPHP Tracy extensions
 }
 
 /**********************************************

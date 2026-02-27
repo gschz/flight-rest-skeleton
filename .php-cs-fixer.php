@@ -6,7 +6,7 @@ use PhpCsFixer\Finder;
 $finder = Finder::create()
     ->in(__DIR__ . '/app')
     ->name('*.php')
-    ->exclude('vendor');
+    ->exclude(['vendor', 'cache']);
 
 return (new Config())
     ->setRiskyAllowed(true)

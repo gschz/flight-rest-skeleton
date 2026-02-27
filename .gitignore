@@ -1,5 +1,10 @@
 vendor/
 .vagrant/
+.vercel/
 .runway-creds.json
 .env
 .php-cs-fixer.cache
+.phpunit.result.cache
+/.phpunit.cache/
+/tests/phpunit/.phpunit.result.cache
+/app/cache/

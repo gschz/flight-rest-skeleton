@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Bootstrap File
- * 
+ *
  * This is the file called bootstrap who's job is to make sure that all the
  * required services, plugins, connections, etc. are loaded and ready to go
  * for every request made to the application.
@@ -10,7 +12,7 @@
 $ds = DIRECTORY_SEPARATOR;
 require(__DIR__ . $ds . '..' . $ds . '..' . $ds . 'vendor' . $ds . 'autoload.php');
 if (file_exists(__DIR__ . $ds . 'config.php') === false) {
-	Flight::halt(500, 'Config file not found. Please create a config.php file in the app/config directory to get started.');
+    Flight::halt(500, 'Config file not found. Please create a config.php file in the app/config directory to get started.');
 }
 
 // It is better practice to not use static methods for everything. It makes your
@@ -32,7 +34,7 @@ $config = require(__DIR__ . '/config.php');
  * Need caching? You can setup a Redis service
  * Need to send email? You can setup a mailgun/sendgrid/whatever service to send emails.
  * Need to send SMS? You can setup a Twilio service.
- * 
+ *
  * All the services and how they are configured are setup in the services file.
  * In many cases, services are all attached to something called a "services container"
  * or more simply, a "container". The container manages if you should share the same
@@ -49,7 +51,7 @@ $router = $app->router();
  * Load the routes file. the $router variable above is passed into the routes.php
  * file below so that you can define routes in that file.
  * A route is really just a URL, but saying route makes you sound cooler.
- * When someone hits that URL, you point them to a function or method 
+ * When someone hits that URL, you point them to a function or method
  * that will handle the request.
  */
 require(__DIR__ . '/routes.php');

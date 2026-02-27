@@ -1,5 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
+use flight\Engine;
+
 /**********************************************
  *      FlightPHP Skeleton Sample Config      *
  **********************************************
@@ -24,12 +28,12 @@ error_reporting(E_ALL);
 
 // Character encoding
 if (function_exists('mb_internal_encoding')) {
-	mb_internal_encoding('UTF-8');
+    mb_internal_encoding('UTF-8');
 }
 
 // Default Locale Change as needed or feel free to remove.
 if (function_exists('setlocale')) {
-	setlocale(LC_ALL, 'en_US.UTF-8');
+    setlocale(LC_ALL, 'en_US.UTF-8');
 }
 
 /**********************************************
@@ -37,8 +41,8 @@ if (function_exists('setlocale')) {
  **********************************************/
 
 // Get the $app var to use below
-if (empty($app)) {
-	$app = Flight::app();
+if (!isset($app) || !$app instanceof Engine) {
+    $app = Flight::app();
 }
 
 // Refer to this constant to get the project root directory
@@ -49,7 +53,7 @@ define('PROJECT_ROOT', __DIR__ . '/../..');
 $app->path(PROJECT_ROOT);
 
 // Core config variables
-$app->set('flight.base_url', '/',);           // Base URL for your app. Change if app is in a subdirectory (e.g., '/myapp/')
+$app->set('flight.base_url', '/', );           // Base URL for your app. Change if app is in a subdirectory (e.g., '/myapp/')
 $app->set('flight.case_sensitive', false);    // Set true for case sensitive routes. Default: false
 $app->set('flight.log_errors', true);         // Log errors to file. Recommended: true in production
 $app->set('flight.handle_errors', false);     // Let Tracy handle errors if false. Set true to use Flight's error handler
@@ -69,34 +73,34 @@ $app->set('csp_nonce', $nonce);
 // you'll get this array back for your configuration settings.
 // $config = include PROJECT_ROOT .'/app/config/config.php';
 return [
-	/**************************************
-	 *         Database Settings          *
-	 **************************************/
-	'database' => [
-		// MySQL Example:
-		// 'host'     => 'localhost',      // Database host (e.g., 'localhost', 'db.example.com')
-		// 'dbname'   => 'your_db_name',   // Database name (e.g., 'flightphp')
-		// 'user'     => 'your_username',  // Database user (e.g., 'root')
-		// 'password' => 'your_password',  // Database password (never commit real passwords)
+    /**************************************
+     *         Database Settings          *
+     **************************************/
+    'database' => [
+        // MySQL Example:
+        // 'host'     => 'localhost',      // Database host (e.g., 'localhost', 'db.example.com')
+        // 'dbname'   => 'your_db_name',   // Database name (e.g., 'flightphp')
+        // 'user'     => 'your_username',  // Database user (e.g., 'root')
+        // 'password' => 'your_password',  // Database password (never commit real passwords)
 
-		// SQLite Example:
-		// 'file_path' => __DIR__ . $ds . '..' . $ds . 'database.sqlite', // Path to SQLite file
-	],
+        // SQLite Example:
+        // 'file_path' => __DIR__ . $ds . '..' . $ds . 'database.sqlite', // Path to SQLite file
+    ],
 
-	/**************************************
-	 *        Runway Settings             *
-	 **************************************/
-	'runway' => [
-		'index_root' => "public/index.php",
-		'app_root' => "app/"
-	]
+    /**************************************
+     *        Runway Settings             *
+     **************************************/
+    'runway' => [
+        'index_root' => "public/index.php",
+        'app_root' => "app/"
+    ]
 
-	// Google OAuth Credentials
-	// 'google_oauth' => [
-	//     'client_id'     => 'your_client_id',     // Google API client ID
-	//     'client_secret' => 'your_client_secret', // Google API client secret
-	//     'redirect_uri'  => 'your_redirect_uri',  // Redirect URI for OAuth callback
-	// ],
+    // Google OAuth Credentials
+    // 'google_oauth' => [
+    //     'client_id'     => 'your_client_id',     // Google API client ID
+    //     'client_secret' => 'your_client_secret', // Google API client secret
+    //     'redirect_uri'  => 'your_redirect_uri',  // Redirect URI for OAuth callback
+    // ],
 
-	// Add more configuration sections below as needed
+    // Add more configuration sections below as needed
 ];

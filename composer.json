@@ -9,8 +9,15 @@
     "setup"
   ],
   "license": "MIT",
+  "version": "0.1.0-alpha",
+  "authors": [
+    {
+      "name": "gschz",
+      "email": "gschz.git@gmail.com"
+    }
+  ],
   "require": {
-    "php": "8.4",
+    "php": "^8.4",
     "ext-json": "*",
     "flightphp/core": "^3.0",
     "flightphp/runway": "^1.1",
@@ -19,19 +26,19 @@
   "require-dev": {
     "rector/rector": "^2.1",
     "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^11",
     "friendsofphp/php-cs-fixer": "^3.64",
     "flightphp/tracy-extensions": "^0.2"
   },
   "autoload": {
     "psr-4": {
-      "App\\": "app/",
-      "Database\\Factories\\": "../database/factories/",
-      "Database\\Seeders\\": "../database/seeders/"
+      "app\\": "app/"
     }
   },
   "scripts": {
     "start": "php -S localhost:8000 -t public",
-    "test:types": "vendor/bin/phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
+    "test:unit": "vendor/bin/phpunit -c tests/phpunit/phpunit.xml --testdox",
+    "test:stan": "vendor/bin/phpstan analyze --configuration=phpstan.neon --memory-limit=512M",
     "rector:dry": "vendor/bin/rector --dry-run --clear-cache",
     "rector:fix": "vendor/bin/rector --clear-cache",
     "lint": "vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes --config=.php-cs-fixer.php",
