@@ -1,8 +1,9 @@
 parameters:
-    level: max
-    phpVersion: 80400 # PHP 8.4
+  level: max
+  phpVersion: 80400 # PHP 8.4
 
-    paths:
-        - app
+  paths:
+    - app
 
-    tmpDir: ../app/cache/phpstan
+  excludePaths:
+    - app/cache
