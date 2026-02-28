@@ -10,9 +10,8 @@ vendor/
 /app/cache/
 
 # Local env files (not examples)
-.envs/.env.local
-.envs/.env.pg.local
-.envs/.env.production
+.envs/.env*
+!.envs/.env.*.example
 
 # Database files
 database/*.sqlite

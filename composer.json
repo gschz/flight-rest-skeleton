@@ -1,12 +1,14 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "gschz/php-flight-setup",
-  "description": "A PHP Flight project setup.",
+  "name": "gschz/flight-rest-skeleton",
+  "description": "Pure REST API Skeleton for FlightPHP v3 with Eloquent, Phinx, and Best Practices.",
   "type": "project",
   "keywords": [
     "flightphp",
-    "php",
-    "setup"
+    "skeleton",
+    "rest-api",
+    "eloquent",
+    "phinx"
   ],
   "license": "MIT",
   "version": "0.1.0-alpha",

@@ -36,8 +36,11 @@ if (!isset($app) || !$app instanceof Engine) {
     $app = Flight::app();
 }
 
-define('PROJECT_ROOT', __DIR__ . '/../..');
+define('PROJECT_ROOT', realpath(__DIR__ . '/../..'));
 $app->path(PROJECT_ROOT);
+
+// Set view path
+$app->set('flight.views.path', PROJECT_ROOT . '/app/views');
 
 $appEnv = (string)(getenv('APP_ENV') ?: 'development');
 define('APP_ENV', $appEnv);
@@ -92,9 +95,24 @@ if ($dbUrl !== '' && $dbConnection === 'pgsql') {
     ];
 } else {
     // SQLite (default for local development)
+    $sqlitePath = (string)(getenv('DB_DATABASE') ?: 'database/database.sqlite3');
+    if (
+        !str_contains($sqlitePath, '/')
+        && !str_contains($sqlitePath, '\\')
+        && $sqlitePath !== ':memory:'
+    ) {
+        $sqlitePath = PROJECT_ROOT . '/database/' . $sqlitePath;
+    } elseif ($sqlitePath !== ':memory:' && !file_exists($sqlitePath)) {
+        // Try to resolve relative path from PROJECT_ROOT
+        $absolutePath = PROJECT_ROOT . '/' . ltrim($sqlitePath, '/\\');
+        if (file_exists($absolutePath)) {
+            $sqlitePath = $absolutePath;
+        }
+    }
+
     $dbConfig = [
         'driver'   => 'sqlite',
-        'database' => (string)(getenv('DB_DATABASE') ?: PROJECT_ROOT . '/database/database.sqlite3'),
+        'database' => $sqlitePath,
         'prefix'   => '',
         'foreign_key_constraints' => true,
     ];

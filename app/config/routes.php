@@ -2,26 +2,31 @@
 
 declare(strict_types=1);
 
-use app\controllers\ApiExampleController;
 use app\middlewares\CorsMiddleware;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
 
 /**
+ * Configuración de Rutas
+ *
+ * Este archivo actúa como el punto de entrada para la definición de rutas.
+ * Se encarga de agrupar y cargar las rutas desde archivos separados para
+ * mantener una estructura limpia y escalable.
+ *
  * @var Router $router
  * @var Engine<object> $app
  */
 
-$router->group('/api/v1', function (Router $router): void {
-    $router->get('/users', [ApiExampleController::class, 'getUsers']);
-    $router->get('/users/@id:[0-9]+', [ApiExampleController::class, 'getUser']);
-    $router->post('/users', [ApiExampleController::class, 'createUser']);
-    $router->put('/users/@id:[0-9]+', [ApiExampleController::class, 'updateUser']);
-    $router->delete('/users/@id:[0-9]+', [ApiExampleController::class, 'deleteUser']);
-}, [CorsMiddleware::class, SecurityHeadersMiddleware::class]);
-
-// Health check
-$router->get('/health', function () use ($app): void {
-    $app->json(['status' => 'ok', 'timestamp' => date('c')]);
+// Rutas Web (Interfaz, Health Checks, etc.)
+$router->group('', function (Router $router): void {
+    require __DIR__ . '/../routes/web.php';
 });
+
+// Rutas API (Versionadas, JSON, CORS, etc.)
+$router->group('/api/v1', function (Router $router): void {
+    require __DIR__ . '/../routes/api.php';
+}, [
+    CorsMiddleware::class,
+    SecurityHeadersMiddleware::class,
+]);

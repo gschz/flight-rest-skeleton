@@ -23,6 +23,7 @@ if (file_exists(__DIR__ . $ds . 'config.php') === false) {
 $app    = Flight::app();
 $config = require __DIR__ . '/config.php';
 
+require __DIR__ . '/../utils/helpers.php';
 require __DIR__ . '/services.php';
 
 $router = $app->router();
