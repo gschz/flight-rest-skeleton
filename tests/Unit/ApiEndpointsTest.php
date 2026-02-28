@@ -12,9 +12,23 @@ use PHPUnit\Framework\TestCase;
 
 final class ApiEndpointsTest extends TestCase
 {
+    private array $originalGet;
+    private array $originalPost;
+    private array $originalRequest;
+    private array $originalCookie;
+    private array $originalFiles;
+    private array $originalServer;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->originalGet     = $_GET;
+        $this->originalPost    = $_POST;
+        $this->originalRequest = $_REQUEST;
+        $this->originalCookie  = $_COOKIE;
+        $this->originalFiles   = $_FILES;
+        $this->originalServer  = $_SERVER;
 
         // Boot Eloquent with in-memory SQLite
         $capsule = new Capsule();
@@ -44,6 +58,14 @@ final class ApiEndpointsTest extends TestCase
     protected function tearDown(): void
     {
         Capsule::schema()->dropIfExists('users');
+
+        $_GET     = $this->originalGet;
+        $_POST    = $this->originalPost;
+        $_REQUEST = $this->originalRequest;
+        $_COOKIE  = $this->originalCookie;
+        $_FILES   = $this->originalFiles;
+        $_SERVER  = $this->originalServer;
+
         parent::tearDown();
     }
 
