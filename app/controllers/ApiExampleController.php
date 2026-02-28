@@ -9,6 +9,7 @@ use app\utils\ApiResponse;
 use flight\Engine;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
+use Tracy\Debugger;
 
 /**
  * Controlador de Ejemplo para la API.
@@ -41,11 +42,13 @@ class ApiExampleController
             $users = User::all();
             ApiResponse::success($this->app, $users);
         } catch (Throwable $throwable) {
-            ApiResponse::error(
-                $this->app,
-                'Error al recuperar la lista de usuarios: ' . $throwable->getMessage(),
-                500
-            );
+            Debugger::log($throwable, Debugger::EXCEPTION);
+            $message = 'Error al recuperar la lista de usuarios';
+            if (defined('IS_DEVELOPMENT') && IS_DEVELOPMENT) {
+                $message .= ': ' . $throwable->getMessage();
+            }
+
+            ApiResponse::error($this->app, $message, 500);
         }
     }
 
@@ -62,11 +65,13 @@ class ApiExampleController
         } catch (ModelNotFoundException) {
             ApiResponse::error($this->app, 'Usuario no encontrado', 404);
         } catch (Throwable $e) {
-            ApiResponse::error(
-                $this->app,
-                'Error al recuperar el usuario: ' . $e->getMessage(),
-                500
-            );
+            Debugger::log($e, Debugger::EXCEPTION);
+            $message = 'Error al recuperar el usuario';
+            if (defined('IS_DEVELOPMENT') && IS_DEVELOPMENT) {
+                $message .= ': ' . $e->getMessage();
+            }
+
+            ApiResponse::error($this->app, $message, 500);
         }
     }
 
@@ -105,11 +110,13 @@ class ApiExampleController
             $user = User::create($data);
             ApiResponse::success($this->app, $user, 201);
         } catch (Throwable $throwable) {
-            ApiResponse::error(
-                $this->app,
-                'No se pudo crear el usuario: ' . $throwable->getMessage(),
-                500
-            );
+            Debugger::log($throwable, Debugger::EXCEPTION);
+            $message = 'No se pudo crear el usuario';
+            if (defined('IS_DEVELOPMENT') && IS_DEVELOPMENT) {
+                $message .= ': ' . $throwable->getMessage();
+            }
+
+            ApiResponse::error($this->app, $message, 500);
         }
     }
 
@@ -130,11 +137,13 @@ class ApiExampleController
         } catch (ModelNotFoundException) {
             ApiResponse::error($this->app, 'Usuario no encontrado', 404);
         } catch (Throwable $e) {
-            ApiResponse::error(
-                $this->app,
-                'Error al actualizar el usuario: ' . $e->getMessage(),
-                500
-            );
+            Debugger::log($e, Debugger::EXCEPTION);
+            $message = 'Error al actualizar el usuario';
+            if (defined('IS_DEVELOPMENT') && IS_DEVELOPMENT) {
+                $message .= ': ' . $e->getMessage();
+            }
+
+            ApiResponse::error($this->app, $message, 500);
         }
     }
 
@@ -153,11 +162,13 @@ class ApiExampleController
         } catch (ModelNotFoundException) {
             ApiResponse::error($this->app, 'Usuario no encontrado', 404);
         } catch (Throwable $e) {
-            ApiResponse::error(
-                $this->app,
-                'Error al eliminar el usuario: ' . $e->getMessage(),
-                500
-            );
+            Debugger::log($e, Debugger::EXCEPTION);
+            $message = 'Error al eliminar el usuario';
+            if (defined('IS_DEVELOPMENT') && IS_DEVELOPMENT) {
+                $message .= ': ' . $e->getMessage();
+            }
+
+            ApiResponse::error($this->app, $message, 500);
         }
     }
 }
