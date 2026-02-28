@@ -36,7 +36,7 @@ if (!isset($app) || !$app instanceof Engine) {
     $app = Flight::app();
 }
 
-define('PROJECT_ROOT', realpath(__DIR__ . '/../..'));
+define('PROJECT_ROOT', realpath(__DIR__ . '/../..') ?: __DIR__ . '/../..');
 $app->path(PROJECT_ROOT);
 
 // Set view path
