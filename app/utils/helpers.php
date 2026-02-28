@@ -14,6 +14,13 @@ if (!function_exists('base_path')) {
      */
     function base_path(string $path = ''): string
     {
-        return PROJECT_ROOT . ($path !== '' && $path !== '0' ? '/' . ltrim($path, '/') : '');
+        if ($path === '') {
+            return PROJECT_ROOT;
+        }
+
+        $base = rtrim(PROJECT_ROOT, DIRECTORY_SEPARATOR . '/\\');
+        $relativePath = ltrim($path, DIRECTORY_SEPARATOR . '/\\');
+
+        return $base . DIRECTORY_SEPARATOR . $relativePath;
     }
 }
