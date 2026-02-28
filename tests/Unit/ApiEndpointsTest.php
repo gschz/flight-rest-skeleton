@@ -142,7 +142,7 @@ final class ApiEndpointsTest extends TestCase
         $_REQUEST = array_merge($_GET, $_POST);
         $_COOKIE = [];
         $_FILES = [];
-        $_SERVER = array_merge($_SERVER, [
+        $_SERVER = [
             'REQUEST_METHOD' => strtoupper($method),
             'REQUEST_URI' => $uri,
             'SCRIPT_NAME' => '/index.php',
@@ -151,7 +151,7 @@ final class ApiEndpointsTest extends TestCase
             'SERVER_PORT' => '8000',
             'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
             'CONTENT_LENGTH' => (string) strlen(http_build_query($_POST)),
-        ]);
+        ];
 
         ob_start();
         $engine->start();
