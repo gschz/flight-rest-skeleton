@@ -31,7 +31,7 @@ if (IS_DEVELOPMENT && PHP_SAPI !== 'cli') {
     Debugger::enable(Debugger::Production);
 }
 
-Debugger::$logDirectory = PROJECT_ROOT . $ds . 'app' . $ds . 'log';
+Debugger::$logDirectory = base_path('app' . $ds . 'log');
 
 // ── Eloquent ORM ──────────────────────────────────────────────────────────────
 /** @var array<string, mixed> $dbConfig */
@@ -78,10 +78,10 @@ if ($driver === 'pgsql') {
         ? $dbConfig['password']
         : null;
 } else {
-    $sqliteDatabase = $dbConfig['database'] ?? (PROJECT_ROOT . '/database/database.sqlite3');
+    $sqliteDatabase = $dbConfig['database'] ?? base_path('database/database.sqlite3');
     $sqliteDatabase = is_string($sqliteDatabase)
         ? $sqliteDatabase
-        : (PROJECT_ROOT . '/database/database.sqlite3');
+        : base_path('database/database.sqlite3');
 
     $pdoDsn      = 'sqlite:' . $sqliteDatabase;
     $pdoUser     = null;

@@ -22,10 +22,13 @@
     "php": "^8.4",
     "ext-json": "*",
     "ext-pdo": "*",
+    "ext-pdo_pgsql": "*",
+    "ext-pdo_sqlite": "*",
     "flightphp/core": "^3.0",
     "flightphp/runway": "^1.1",
     "illuminate/database": "^11.0 || ^12.0",
     "illuminate/events": "^11.0 || ^12.0",
+    "robmorgan/phinx": "^0.16",
     "tracy/tracy": "^2.9"
   },
   "require-dev": {
@@ -33,8 +36,7 @@
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^11",
     "friendsofphp/php-cs-fixer": "^3.64",
-    "flightphp/tracy-extensions": "^0.2",
-    "robmorgan/phinx": "^0.16"
+    "flightphp/tracy-extensions": "^0.2"
   },
   "autoload": {
     "psr-4": {
@@ -42,10 +44,13 @@
     }
   },
   "scripts": {
+    "post-install-cmd": [
+      "php bin/migrate-if-production.php"
+    ],
     "dev": "php bin/dev.php .envs/.env.local",
     "dev:pg": "php bin/dev.php .envs/.env.pg.local",
     "db:migrate": "vendor/bin/phinx migrate -c phinx.php",
-    "db:migrate:pg": "DB_CONNECTION=pgsql vendor/bin/phinx migrate -c phinx.php",
+    "db:migrate:pg": "DB_CONNECTION=pgsql vendor/bin/phinx migrate -c phinx.php -e pgsql",
     "db:migrate:test": "vendor/bin/phinx migrate -c phinx.php -e testing",
     "db:rollback": "vendor/bin/phinx rollback -c phinx.php",
     "db:seed": "vendor/bin/phinx seed:run -c phinx.php",

@@ -19,7 +19,7 @@ use Throwable;
  */
 class ApiExampleController
 {
-    private const INTERNAL_ERROR_MSG = 'Error interno del servidor';
+    private const string INTERNAL_ERROR_MSG = 'Error interno del servidor';
 
     /**
      * Constructor del controlador.

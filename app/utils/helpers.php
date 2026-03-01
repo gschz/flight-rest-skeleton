@@ -14,13 +14,27 @@ if (!function_exists('base_path')) {
      */
     function base_path(string $path = ''): string
     {
-        if ($path === '') {
-            return PROJECT_ROOT;
+        $ds = DIRECTORY_SEPARATOR;
+        $root = '';
+        if (defined('PROJECT_ROOT')) {
+            $constant = constant('PROJECT_ROOT');
+            if (is_string($constant)) {
+                $root = $constant;
+            }
         }
 
-        $base = rtrim(PROJECT_ROOT, DIRECTORY_SEPARATOR . '/\\');
-        $relativePath = ltrim($path, DIRECTORY_SEPARATOR . '/\\');
+        if ($root === '') {
+            $cwd = getcwd();
+            $root = is_string($cwd) ? $cwd : '';
+        }
 
-        return $base . DIRECTORY_SEPARATOR . $relativePath;
+        $base = rtrim($root, $ds . '/\\');
+        $relativePath = ltrim($path, $ds . '/\\');
+
+        if ($relativePath === '') {
+            return $base;
+        }
+
+        return $base . $ds . $relativePath;
     }
 }

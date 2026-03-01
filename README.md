@@ -197,3 +197,8 @@ composer lint:fix         # PHP-CS-Fixer (fix)
 - Los env files con valores reales (`.envs/.env.local`, `.envs/.env.pg.local`) están git-ignorados
 - CORS configurable via `CORS_ALLOWED_ORIGINS`
 - Security headers en todas las rutas API
+
+## Deploy en Heroku
+
+Este proyecto está listo para desplegarse en Heroku sin configuración adicional.
+Ver la guía completa de deploy y operaciones en [docs/HEROKU_OPERATIONS.md](docs/HEROKU_OPERATIONS.md).
