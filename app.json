@@ -1,0 +1,43 @@
+{
+  "name": "flight-rest-skeleton",
+  "description": "Pure REST API Skeleton for FlightPHP v3 with Eloquent, Phinx, and Best Practices.",
+  "repository": "https://github.com/gschz/flight-rest-skeleton",
+  "logo": "https://avatars.githubusercontent.com/u/1542353",
+  "keywords": ["php", "rest-api", "flightphp", "skeleton"],
+  "env": {
+    "APP_ENV": {
+      "description": "Entorno de la aplicación",
+      "value": "production"
+    },
+    "APP_DEBUG": {
+      "description": "Modo debug (false en producción)",
+      "value": "false"
+    },
+    "APP_KEY": {
+      "description": "Clave secreta de la aplicación. Generar con: php -r '$b = base64_encode(random_bytes(32)); echo \"base64:$b\";'",
+      "generator": "secret"
+    },
+    "CORS_ALLOWED_ORIGINS": {
+      "description": "Lista de orígenes CORS permitidos separados por coma, o * para todos",
+      "value": "*"
+    },
+    "LOG_LEVEL": {
+      "description": "Nivel de log: debug, info, warning, error",
+      "value": "error"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0",
+      "as": "DATABASE"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "composer db:migrate"
+  }
+}
