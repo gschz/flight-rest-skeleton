@@ -34,16 +34,20 @@ class ApiExampleController
     }
 
     /**
-     * Obtiene la lista de todos los usuarios.
+     * Obtiene la lista paginada de usuarios.
      *
-     * Recupera todos los registros de la tabla de usuarios y los devuelve
-     * en formato JSON.
+     * Acepta parámetros de query string: `page` (default 1) y `per_page` (default 15, máximo 100).
      */
     public function getUsers(): void
     {
         try {
-            $users = User::all();
-            ApiResponse::success($this->app, $users);
+            $rawPage    = $this->app->request()->query['page'];
+            $rawPerPage = $this->app->request()->query['per_page'];
+            $page    = max(1, is_numeric($rawPage) ? (int) $rawPage : 1);
+            $perPage = min(100, max(1, is_numeric($rawPerPage) ? (int) $rawPerPage : 15));
+
+            $paginator = User::paginate($perPage, ['*'], 'page', $page);
+            ApiResponse::fromPaginator($this->app, $paginator);
         } catch (Throwable $throwable) {
             error_log((string) $throwable);
             ApiResponse::error($this->app, self::INTERNAL_ERROR_MSG, 500);
