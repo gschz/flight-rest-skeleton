@@ -88,6 +88,14 @@ final class ApiEndpointsTest extends TestCase
         $json = json_decode($body, true);
         self::assertTrue($json['success'] ?? false);
         self::assertCount(3, $json['data'] ?? []);
+
+        // Verificar estructura de paginación
+        $meta = $json['meta'] ?? [];
+        self::assertSame(3, $meta['total'] ?? null);
+        self::assertSame(1, $meta['page'] ?? null);
+        self::assertSame(15, $meta['per_page'] ?? null);
+        self::assertSame(1, $meta['pages'] ?? null);
+        self::assertFalse($meta['has_more'] ?? true);
     }
 
     public function testGetUserSuccess(): void

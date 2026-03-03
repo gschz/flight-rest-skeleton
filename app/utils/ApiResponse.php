@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\utils;
 
 use flight\Engine;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ApiResponse
 {
@@ -26,20 +27,31 @@ class ApiResponse
     }
 
     /**
+     * Genera una respuesta JSON paginada a partir de un LengthAwarePaginator de Eloquent.
+     *
      * @param Engine<object> $engine
-     * @param array<string, mixed> $extra
+     * @param LengthAwarePaginator<int, mixed> $lengthAwarePaginator
      */
-    public static function paginated(Engine $engine, mixed $data, int $total, int $page, int $perPage, array $extra = []): void
+    public static function fromPaginator(Engine $engine, LengthAwarePaginator $lengthAwarePaginator): void
     {
-        $engine->json(array_merge([
+        $engine->json([
             'success' => true,
-            'data'    => $data,
+            'data'    => $lengthAwarePaginator->items(),
             'meta'    => [
-                'total'    => $total,
-                'page'     => $page,
-                'per_page' => $perPage,
-                'pages'    => (int)ceil($total / max(1, $perPage)),
+                'total'    => $lengthAwarePaginator->total(),
+                'page'     => $lengthAwarePaginator->currentPage(),
+                'per_page' => $lengthAwarePaginator->perPage(),
+                'pages'    => $lengthAwarePaginator->lastPage(),
+                'from'     => $lengthAwarePaginator->firstItem() ?? 0,
+                'to'       => $lengthAwarePaginator->lastItem() ?? 0,
+                'has_more' => $lengthAwarePaginator->hasMorePages(),
             ],
-        ], $extra));
+            'links'   => [
+                'first' => $lengthAwarePaginator->url(1),
+                'last'  => $lengthAwarePaginator->url($lengthAwarePaginator->lastPage()),
+                'prev'  => $lengthAwarePaginator->previousPageUrl(),
+                'next'  => $lengthAwarePaginator->nextPageUrl(),
+            ],
+        ]);
     }
 }

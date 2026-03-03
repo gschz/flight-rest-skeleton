@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static static|null find(mixed $id, array<int, string>|string $columns = ['*'])
  * @method static static findOrFail(mixed $id, array<int, string>|string $columns = ['*'])
  * @method static \Illuminate\Database\Eloquent\Builder<static> where(string|array<string, mixed> $column, mixed $operator = null, mixed $value = null, string $boolean = 'and')
+ * @method static \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, static> paginate(int $perPage = 15, array<int, string> $columns = ['*'], string $pageName = 'page', int|null $page = null)
  */
 class User extends Model
 {
