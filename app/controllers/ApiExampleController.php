@@ -6,8 +6,10 @@ namespace app\controllers;
 
 use app\models\User;
 use app\utils\ApiResponse;
+use app\utils\Validator;
 use flight\Engine;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Respect\Validation\Validator as v;
 use Throwable;
 
 /**
@@ -59,7 +61,11 @@ class ApiExampleController
             $user = User::findOrFail($id);
             ApiResponse::success($this->app, $user);
         } catch (ModelNotFoundException) {
-            ApiResponse::error($this->app, 'Usuario no encontrado', 404);
+            ApiResponse::error(
+                $this->app,
+                'Usuario no encontrado',
+                404
+            );
         } catch (Throwable $e) {
             error_log((string) $e);
             ApiResponse::error($this->app, self::INTERNAL_ERROR_MSG, 500);
@@ -75,19 +81,27 @@ class ApiExampleController
     {
         $data = $this->app->request()->data->getData();
 
-        // Validación simple
-        if (empty($data['name']) || empty($data['email'])) {
+        $validationResult = Validator::validate(
+            $data,
+            [
+                'name'  => v::stringType()->notEmpty()->length(1, 100),
+                'email' => v::email()->notEmpty(),
+            ]
+        );
+
+        if (!$validationResult->isValid()) {
             ApiResponse::error(
                 $this->app,
-                'El nombre y el correo electrónico son obligatorios',
-                400
+                'Datos de entrada inválidos',
+                422,
+                $validationResult->errors()
             );
 
             return;
         }
 
         try {
-            // Verificar duplicados (ejemplo simple, idealmente usar request validation)
+            // Verificar que el email no esté registrado antes de insertar
             if (User::where('email', $data['email'])->exists()) {
                 ApiResponse::error(
                     $this->app,
@@ -98,7 +112,11 @@ class ApiExampleController
                 return;
             }
 
-            $user = User::create($data);
+            // Solo insertar los campos validados — evitar mass assignment no controlado
+            $user = User::create([
+                'name'  => $data['name'],
+                'email' => $data['email'],
+            ]);
             ApiResponse::success($this->app, $user, 201);
         } catch (Throwable $throwable) {
             error_log((string) $throwable);
@@ -117,11 +135,38 @@ class ApiExampleController
             $user = User::findOrFail($id);
             $data = $this->app->request()->data->getData();
 
-            $user->update($data);
+            $validationResult = Validator::validate(
+                $data,
+                [
+                    'name'  => v::stringType()->notEmpty()->length(1, 60),
+                    'email' => v::email()->notEmpty(),
+                ]
+            );
+
+            if (!$validationResult->isValid()) {
+                ApiResponse::error(
+                    $this->app,
+                    'Datos de entrada inválidos',
+                    422,
+                    $validationResult->errors()
+                );
+
+                return;
+            }
+
+            // Solo actualizar los campos validados — evitar mass assignment no controlado
+            $user->update([
+                'name'  => $data['name'],
+                'email' => $data['email'],
+            ]);
 
             ApiResponse::success($this->app, $user);
         } catch (ModelNotFoundException) {
-            ApiResponse::error($this->app, 'Usuario no encontrado', 404);
+            ApiResponse::error(
+                $this->app,
+                'Usuario no encontrado',
+                404
+            );
         } catch (Throwable $e) {
             error_log((string) $e);
             ApiResponse::error($this->app, self::INTERNAL_ERROR_MSG, 500);
@@ -139,9 +184,16 @@ class ApiExampleController
             $user = User::findOrFail($id);
             $user->delete();
 
-            ApiResponse::success($this->app, ['deleted' => true, 'id' => $id]);
+            ApiResponse::success($this->app, [
+                'deleted' => true,
+                'id' => $id
+            ]);
         } catch (ModelNotFoundException) {
-            ApiResponse::error($this->app, 'Usuario no encontrado', 404);
+            ApiResponse::error(
+                $this->app,
+                'Usuario no encontrado',
+                404
+            );
         } catch (Throwable $e) {
             error_log((string) $e);
             ApiResponse::error($this->app, self::INTERNAL_ERROR_MSG, 500);

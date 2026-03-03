@@ -126,7 +126,8 @@ final class ApiEndpointsTest extends TestCase
     public function testUpdateUser(): void
     {
         [$status, $body] = $this->dispatch('PUT', '/api/v1/users/2', [
-            'name' => 'Updated',
+            'name'  => 'Updated',
+            'email' => 'updated@example.com',
         ]);
 
         self::assertSame(200, $status);
