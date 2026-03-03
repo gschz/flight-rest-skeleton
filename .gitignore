@@ -20,3 +20,6 @@ database/*.sqlite3
 # Logs
 app/log/*.log
 app/log/
+
+# IDE files
+.idea/

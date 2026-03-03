@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\utils\ApiResponse;
 use flight\Engine;
 use flight\database\SimplePdo;
 use flight\debug\database\PdoQueryCapture;
@@ -93,3 +94,25 @@ $pdoClass = (IS_DEVELOPMENT && Debugger::$showBar && PHP_SAPI !== 'cli')
     : SimplePdo::class;
 
 $app->register('db', $pdoClass, [$pdoDsn, $pdoUser, $pdoPassword]);
+
+// ── Global Error & Not-Found Handlers ────────────────────────────────────────
+$app->map('error', static function (Throwable $throwable) use ($app): void {
+    error_log((string) $throwable);
+
+    $message = IS_DEVELOPMENT
+        ? sprintf(
+            '[%s] %s',
+            $throwable::class,
+            $throwable->getMessage()
+        ) : 'Internal server error';
+
+    ApiResponse::error($app, $message, 500);
+});
+
+$app->map('notFound', static function (): void {
+    ApiResponse::error(
+        Flight::app(),
+        'Recurso no encontrado',
+        404
+    );
+});
