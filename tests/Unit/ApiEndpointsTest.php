@@ -49,6 +49,12 @@ final class ApiEndpointsTest extends TestCase
             $table->timestamps();
         });
 
+        Capsule::schema()->create('rate_limits', function (Blueprint $table) {
+            $table->string('key', 255)->primary();
+            $table->integer('hits')->default(0);
+            $table->bigInteger('window_start');
+        });
+
         // Seed initial data
         User::create(['name' => 'Bob Jones', 'email' => 'bob@example.com']);
         User::create(['name' => 'Bob Smith', 'email' => 'bsmith@example.com']);
@@ -57,6 +63,7 @@ final class ApiEndpointsTest extends TestCase
 
     protected function tearDown(): void
     {
+        Capsule::schema()->dropIfExists('rate_limits');
         Capsule::schema()->dropIfExists('users');
 
         $_GET     = $this->originalGet;
