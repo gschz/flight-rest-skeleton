@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\middlewares\CorsMiddleware;
+use app\middlewares\RateLimitMiddleware;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
@@ -29,4 +30,5 @@ $router->group('/api/v1', function (Router $router): void {
 }, [
     CorsMiddleware::class,
     SecurityHeadersMiddleware::class,
+    RateLimitMiddleware::class,
 ]);
