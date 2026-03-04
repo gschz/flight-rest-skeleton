@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\middlewares\RateLimitMiddleware;
 use app\models\User;
 use flight\Engine;
 use Illuminate\Database\Capsule\Manager as Capsule;
@@ -150,6 +151,55 @@ final class ApiEndpointsTest extends TestCase
         self::assertTrue($json['success'] ?? false);
         self::assertSame(2, $json['data']['id'] ?? null);
         self::assertSame('Updated', $json['data']['name'] ?? null);
+    }
+
+    public function testRateLimitingBlocks429(): void
+    {
+        putenv('RATE_LIMIT_ENABLED=true');
+        $_ENV['RATE_LIMIT_ENABLED'] = 'true';
+
+        try {
+            $makeEngine = static function (): Engine {
+                $engine = new Engine();
+                Flight::setEngine($engine);
+                $engine->set('flight.handle_errors', false);
+                $engine->set('flight.content_length', false);
+
+                return $engine;
+            };
+
+            // Requests 1 + 2: dentro del límite (maxRequests=2)
+            $engine1    = $makeEngine();
+            $middleware1 = new RateLimitMiddleware($engine1, 2, 60);
+            ob_start();
+            $middleware1->before([]);
+            ob_end_clean();
+            self::assertSame(200, $engine1->response()->status());
+
+            $engine2    = $makeEngine();
+            $middleware2 = new RateLimitMiddleware($engine2, 2, 60);
+            ob_start();
+            $middleware2->before([]);
+            ob_end_clean();
+            self::assertSame(200, $engine2->response()->status());
+
+            // Request 3: límite alcanzado — debe devolver 429 + Retry-After
+            $engine3    = $makeEngine();
+            $middleware3 = new RateLimitMiddleware($engine3, 2, 60);
+            ob_start();
+            $middleware3->before([]);
+            ob_end_clean();
+
+            self::assertSame(429, $engine3->response()->status());
+
+            $headers = $engine3->response()->headers();
+            self::assertArrayHasKey('Retry-After', $headers);
+            self::assertGreaterThan(0, (int) ($headers['Retry-After'] ?? 0));
+        } finally {
+            putenv('RATE_LIMIT_ENABLED');
+            unset($_ENV['RATE_LIMIT_ENABLED']);
+            Capsule::table('rate_limits')->truncate();
+        }
     }
 
     public function testDeleteUser(): void
