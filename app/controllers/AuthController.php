@@ -96,10 +96,11 @@ class AuthController
             $payload      = $jwtService->generatePayload($user->id, 'user');
             $accessToken  = $jwtService->encode($payload);
             $refreshToken = $jwtService->generateRefreshToken();
+            $tokenHash    = hash('sha256', $refreshToken);
 
             Capsule::table('refresh_tokens')->insert([
                 'user_id'    => $user->id,
-                'token'      => $refreshToken,
+                'token'      => $tokenHash,
                 'expires_at' => date(
                     'Y-m-d H:i:s',
                     time() + $jwtService->getRefreshTtl()
@@ -148,7 +149,7 @@ class AuthController
 
         try {
             $record = Capsule::table('refresh_tokens')
-                ->where('token', $refreshToken)
+                ->where('token', hash('sha256', $refreshToken))
                 ->first();
 
             if ($record === null) {
@@ -225,20 +226,10 @@ class AuthController
         }
 
         try {
-            $affected = Capsule::table('refresh_tokens')
-                ->where('token', $refreshToken)
+            Capsule::table('refresh_tokens')
+                ->where('token', hash('sha256', $refreshToken))
                 ->where('revoked', 0)
                 ->update(['revoked' => 1]);
-
-            if ($affected === 0) {
-                ApiResponse::error(
-                    $this->app,
-                    'Token de refresco no encontrado o ya revocado',
-                    404
-                );
-
-                return;
-            }
 
             ApiResponse::success($this->app, [
                 'message' => 'Sesión cerrada correctamente'

@@ -126,11 +126,6 @@ return [
         'key'   => (string)(getenv('APP_KEY') ?: ''),
     ],
     'database' => array_merge(['connection' => $dbConnection], $dbConfig),
-    'jwt' => [
-        'secret'      => (string)(getenv('JWT_SECRET') ?: ''),
-        'ttl'         => (int)(getenv('JWT_TTL') ?: 3600),
-        'refresh_ttl' => (int)(getenv('JWT_REFRESH_TTL') ?: 604800),
-    ],
     'runway' => [
         'index_root' => 'public/index.php',
         'app_root'   => 'app/',

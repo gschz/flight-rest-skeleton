@@ -34,7 +34,7 @@ final class CreateUsersTable extends AbstractMigration
             ->addColumn(
                 'password',
                 'string',
-                ['limit' => 255, 'null' => true, 'default' => null]
+                ['limit' => 255, 'null' => false]
             )
             ->addColumn(
                 'created_at',

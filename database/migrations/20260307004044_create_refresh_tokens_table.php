@@ -56,6 +56,12 @@ final class CreateRefreshTokensTable extends AbstractMigration
             )
             ->addIndex(['token'], ['unique' => true])
             ->addIndex(['user_id'])
+            ->addForeignKey(
+                'user_id',
+                'users',
+                'id',
+                ['delete' => 'CASCADE', 'update' => 'NO_ACTION']
+            )
             ->create();
     }
 }

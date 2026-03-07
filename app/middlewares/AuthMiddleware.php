@@ -27,7 +27,8 @@ final readonly class AuthMiddleware
         //
     }
 
-    public function before(): void
+    /** @param array<mixed> $params */
+    public function before(array $params): void
     {
         $rawHeader  = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
         $authHeader = is_string($rawHeader) ? $rawHeader : '';
@@ -48,8 +49,19 @@ final readonly class AuthMiddleware
             $payload    = $jwtService->decode($token);
 
             $this->engine->set('jwt_payload', $payload);
-            $subRaw = $payload['sub'] ?? 0;
-            $this->engine->set('auth_user_id', is_int($subRaw) ? $subRaw : 0);
+            $subRaw = $payload['sub'] ?? null;
+            if (!is_int($subRaw)) {
+                ApiResponse::error(
+                    $this->engine,
+                    'Token de autenticación inválido',
+                    401
+                );
+                $this->engine->stop();
+
+                return;
+            }
+
+            $this->engine->set('auth_user_id', $subRaw);
         } catch (RuntimeException $runtimeException) {
             ApiResponse::error(
                 $this->engine,
