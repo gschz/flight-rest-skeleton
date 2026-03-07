@@ -23,5 +23,8 @@
         <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
+        <env name="JWT_SECRET" value="dGVzdF9qd3Rfc2VjcmV0X2Zvcl9waHB1bml0X29ubHlfMzJieXRlcw=="/>
+        <env name="JWT_TTL" value="3600"/>
+        <env name="JWT_REFRESH_TTL" value="604800"/>
     </php>
 </phpunit>

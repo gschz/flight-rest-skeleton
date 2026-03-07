@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use app\controllers\AuthController;
+use app\middlewares\AuthMiddleware;
 use app\middlewares\RateLimitMiddleware;
 use app\models\User;
+use app\utils\JwtService;
 use flight\Engine;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Schema\Blueprint;
@@ -19,6 +22,7 @@ final class ApiEndpointsTest extends TestCase
     private array $originalCookie;
     private array $originalFiles;
     private array $originalServer;
+    private string $authToken = '';
 
     protected function setUp(): void
     {
@@ -56,14 +60,40 @@ final class ApiEndpointsTest extends TestCase
             $table->bigInteger('window_start');
         });
 
+        Capsule::schema()->create('refresh_tokens', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('user_id');
+            $table->string('token', 255)->unique();
+            $table->dateTime('expires_at');
+            $table->integer('revoked')->default(0);
+            $table->dateTime('created_at')->nullable();
+        });
+
         // Seed initial data
-        User::create(['name' => 'Bob Jones', 'email' => 'bob@example.com']);
-        User::create(['name' => 'Bob Smith', 'email' => 'bsmith@example.com']);
-        User::create(['name' => 'Suzy Johnson', 'email' => 'suzy@example.com']);
+        User::create([
+            'name' => 'Bob Jones',
+            'email' => 'bob@example.com',
+            'password' => password_hash('secret', PASSWORD_DEFAULT)
+        ]);
+        User::create([
+            'name' => 'Bob Smith',
+            'email' => 'bsmith@example.com',
+            'password' => password_hash('secret', PASSWORD_DEFAULT)
+        ]);
+        User::create([
+            'name' => 'Suzy Johnson',
+            'email' => 'suzy@example.com',
+            'password' => password_hash('secret', PASSWORD_DEFAULT)
+        ]);
+
+        // Generar token JWT para autenticar las pruebas de rutas protegidas
+        $jwtService      = new JwtService();
+        $this->authToken = $jwtService->encode($jwtService->generatePayload(1, 'user'));
     }
 
     protected function tearDown(): void
     {
+        Capsule::schema()->dropIfExists('refresh_tokens');
         Capsule::schema()->dropIfExists('rate_limits');
         Capsule::schema()->dropIfExists('users');
 
@@ -75,6 +105,117 @@ final class ApiEndpointsTest extends TestCase
         $_SERVER  = $this->originalServer;
 
         parent::tearDown();
+    }
+
+    public function testLoginSuccess(): void
+    {
+        [$status, $body] = $this->dispatch('POST', '/api/v1/auth/login', [
+            'email'    => 'bob@example.com',
+            'password' => 'secret',
+        ], false);
+
+        self::assertSame(200, $status);
+        $json = json_decode($body, true);
+        self::assertTrue($json['success'] ?? false);
+        self::assertArrayHasKey('access_token', $json['data'] ?? []);
+        self::assertArrayHasKey('refresh_token', $json['data'] ?? []);
+        self::assertSame('Bearer', $json['data']['token_type'] ?? null);
+        self::assertGreaterThan(0, $json['data']['expires_in'] ?? 0);
+    }
+
+    public function testLoginInvalidCredentials(): void
+    {
+        [$status, $body] = $this->dispatch('POST', '/api/v1/auth/login', [
+            'email'    => 'bob@example.com',
+            'password' => 'wrong_password',
+        ], false);
+
+        self::assertSame(401, $status);
+        $json = json_decode($body, true);
+        self::assertFalse($json['success'] ?? true);
+    }
+
+    public function testLoginValidationFails(): void
+    {
+        [$status, $body] = $this->dispatch('POST', '/api/v1/auth/login', [
+            'email'    => 'not-an-email',
+            'password' => '',
+        ], false);
+
+        self::assertSame(422, $status);
+        $json = json_decode($body, true);
+        self::assertFalse($json['success'] ?? true);
+        self::assertArrayHasKey('errors', $json);
+    }
+
+    public function testRefreshToken(): void
+    {
+        // Login para obtener un refresh_token
+        $loginResult = $this->dispatch('POST', '/api/v1/auth/login', [
+            'email'    => 'bob@example.com',
+            'password' => 'secret',
+        ], false);
+        $loginData    = json_decode((string) $loginResult[1], true);
+        $refreshToken = (string) ($loginData['data']['refresh_token'] ?? '');
+
+        self::assertNotEmpty($refreshToken, 'El login debe devolver un refresh_token');
+
+        [$status, $body] = $this->dispatch('POST', '/api/v1/auth/refresh', [
+            'refresh_token' => $refreshToken,
+        ], false);
+
+        self::assertSame(200, $status);
+        $json = json_decode($body, true);
+        self::assertTrue($json['success'] ?? false);
+        self::assertArrayHasKey('access_token', $json['data'] ?? []);
+    }
+
+    public function testLogout(): void
+    {
+        // Login para obtener un refresh_token
+        $loginResult  = $this->dispatch('POST', '/api/v1/auth/login', [
+            'email'    => 'bob@example.com',
+            'password' => 'secret',
+        ], false);
+        $loginData    = json_decode((string) $loginResult[1], true);
+        $refreshToken = (string) ($loginData['data']['refresh_token'] ?? '');
+
+        self::assertNotEmpty($refreshToken, 'El login debe devolver un refresh_token');
+
+        [$status, $body] = $this->dispatch('POST', '/api/v1/auth/logout', [
+            'refresh_token' => $refreshToken,
+        ], false);
+
+        self::assertSame(200, $status);
+        $json = json_decode($body, true);
+        self::assertTrue($json['success'] ?? false);
+
+        // Verificar que el token ya no puede usarse
+        [$refreshStatus] = $this->dispatch('POST', '/api/v1/auth/refresh', [
+            'refresh_token' => $refreshToken,
+        ], false);
+        self::assertSame(401, $refreshStatus);
+    }
+
+    public function testProtectedRouteRequiresToken(): void
+    {
+        $engine = new Engine();
+        Flight::setEngine($engine);
+        $engine->set('flight.handle_errors', false);
+        $engine->set('flight.content_length', false);
+
+        // Sin header Authorization — debe devolver 401
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+
+        $middleware = new AuthMiddleware($engine);
+        ob_start();
+        $middleware->before([]);
+        ob_end_clean();
+
+        self::assertSame(401, $engine->response()->status());
+        /** @var array<string, mixed> $json */
+        $json = json_decode((string) $engine->response()->getBody(), true);
+        self::assertFalse($json['success'] ?? true);
     }
 
     public function testHealthEndpoint(): void
@@ -213,7 +354,7 @@ final class ApiEndpointsTest extends TestCase
         self::assertSame(3, $json['data']['id'] ?? null);
     }
 
-    private function dispatch(string $method, string $uri, array $post = []): array
+    private function dispatch(string $method, string $uri, array $post = [], bool $withAuth = true): array
     {
         $engine = new Engine();
         Flight::setEngine($engine);
@@ -221,31 +362,35 @@ final class ApiEndpointsTest extends TestCase
         $engine->set('flight.handle_errors', false);
         $engine->set('flight.content_length', false);
 
-        $app = $engine;
+        $app    = $engine;
         $router = $app->router();
         require __DIR__ . '/../../app/config/routes.php';
 
-        $_GET = [];
-        $_POST = $post;
+        $_GET     = [];
+        $_POST    = $post;
         $_REQUEST = array_merge($_GET, $_POST);
-        $_COOKIE = [];
-        $_FILES = [];
-        $_SERVER = [
+        $_COOKIE  = [];
+        $_FILES   = [];
+        $_SERVER  = [
             'REQUEST_METHOD' => strtoupper($method),
-            'REQUEST_URI' => $uri,
-            'SCRIPT_NAME' => '/index.php',
-            'HTTP_HOST' => 'localhost',
-            'SERVER_NAME' => 'localhost',
-            'SERVER_PORT' => '8000',
-            'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
+            'REQUEST_URI'    => $uri,
+            'SCRIPT_NAME'    => '/index.php',
+            'HTTP_HOST'      => 'localhost',
+            'SERVER_NAME'    => 'localhost',
+            'SERVER_PORT'    => '8000',
+            'CONTENT_TYPE'   => 'application/x-www-form-urlencoded',
             'CONTENT_LENGTH' => (string) strlen(http_build_query($_POST)),
         ];
+
+        if ($withAuth && $this->authToken !== '') {
+            $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->authToken;
+        }
 
         ob_start();
         $engine->start();
         $body = ob_get_clean();
 
-        $status = $engine->response()->status();
+        $status  = $engine->response()->status();
         $headers = $engine->response()->headers();
 
         return [$status, $body, $headers];

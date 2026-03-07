@@ -25,4 +25,11 @@ return RectorConfig::configure()
     )
     ->withComposerBased(phpunit: true)
     ->withAttributesSets()
+    ->withSkip([
+        // El parámetro $params es requerido por el contrato de FlightPHP
+        // aunque no se use en el cuerpo del método
+        \Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPublicMethodParameterRector::class => [
+            __DIR__ . '/app/middlewares',
+        ],
+    ])
     ->withPhpSets(php84: true);
