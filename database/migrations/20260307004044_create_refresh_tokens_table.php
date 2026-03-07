@@ -4,7 +4,15 @@ declare(strict_types=1);
 
 use Phinx\Migration\AbstractMigration;
 
-final class CreateUsersTable extends AbstractMigration
+
+/**
+ * Crea la tabla `refresh_tokens` para el sistema de autenticación JWT.
+ *
+ * Almacena tokens de refresco opacos asociados a usuarios.
+ * Los tokens pueden ser revocados explícitamente al hacer logout.
+ */
+
+final class CreateRefreshTokensTable extends AbstractMigration
 {
     /**
      * Change Method.
@@ -19,34 +27,35 @@ final class CreateUsersTable extends AbstractMigration
      */
     public function change(): void
     {
-        $table = $this->table('users');
+        $table = $this->table('refresh_tokens');
         $table
             ->addColumn(
-                'name',
-                'string',
-                ['limit' => 255]
+                'user_id',
+                'integer',
+                ['null' => false]
             )
             ->addColumn(
-                'email',
+                'token',
                 'string',
-                ['limit' => 255]
+                ['limit' => 255, 'null' => false]
             )
             ->addColumn(
-                'password',
-                'string',
-                ['limit' => 255, 'null' => true, 'default' => null]
+                'expires_at',
+                'datetime',
+                ['null' => false]
+            )
+            ->addColumn(
+                'revoked',
+                'integer',
+                ['default' => 0, 'null' => false]
             )
             ->addColumn(
                 'created_at',
                 'datetime',
                 ['null' => true, 'default' => null]
             )
-            ->addColumn(
-                'updated_at',
-                'datetime',
-                ['null' => true, 'default' => null]
-            )
-            ->addIndex(['email'], ['unique' => true])
+            ->addIndex(['token'], ['unique' => true])
+            ->addIndex(['user_id'])
             ->create();
     }
 }
