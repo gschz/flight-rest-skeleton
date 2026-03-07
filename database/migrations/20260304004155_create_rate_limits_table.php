@@ -35,9 +35,20 @@ final class CreateRateLimitsTable extends AbstractMigration
         ]);
 
         $table
-            ->addColumn('key', 'string', ['limit' => 255])
-            ->addColumn('hits', 'integer', ['default' => 0])
-            ->addColumn('window_start', 'biginteger')
+            ->addColumn(
+                'key',
+                'string',
+                ['limit' => 255]
+            )
+            ->addColumn(
+                'hits',
+                'integer',
+                ['default' => 0]
+            )
+            ->addColumn(
+                'window_start',
+                'biginteger'
+            )
             ->create();
     }
 }

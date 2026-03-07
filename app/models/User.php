@@ -7,6 +7,10 @@ namespace app\models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * @property int         $id
+ * @property string      $name
+ * @property string      $email
+ * @property string|null $password
  * @method static \Illuminate\Database\Eloquent\Collection<int, static> all(array|mixed $columns = ['*'])
  * @method static static create(array<string, mixed> $attributes = [])
  * @method static static|null find(mixed $id, array<int, string>|string $columns = ['*'])
@@ -23,6 +27,7 @@ class User extends Model
     protected $fillable = [
         'name',
         'email',
+        'password',
     ];
 
     /** @var list<string> */
