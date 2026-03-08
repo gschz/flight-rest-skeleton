@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\controllers\DocsController;
 use flight\net\Router;
 
 /**
@@ -24,3 +25,19 @@ $router->get('/health', function (): void {
         'timestamp' => date('c'),
     ]);
 });
+
+// Documentación OpenAPI — solo disponible fuera de producción
+if (!(defined('IS_PRODUCTION') && IS_PRODUCTION)) {
+    $router->get(
+        '/api-docs/openapi.json',
+        [DocsController::class, 'spec']
+    );
+    $router->get(
+        '/docs',
+        [DocsController::class, 'swagger']
+    );
+    $router->get(
+        '/docs/redoc',
+        [DocsController::class, 'redoc']
+    );
+}
