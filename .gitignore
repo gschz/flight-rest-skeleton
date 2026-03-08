@@ -17,6 +17,10 @@ vendor/
 database/*.sqlite
 database/*.sqlite3
 
+# OpenAPI generated specs (regenerate with: composer docs:generate)
+/public/api-docs/openapi.json
+/public/api-docs/openapi.yaml
+
 # Logs
 app/log/*.log
 app/log/

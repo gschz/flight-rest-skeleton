@@ -35,11 +35,12 @@
     "tracy/tracy": "^2.9"
   },
   "require-dev": {
-    "rector/rector": "^2.1",
+    "flightphp/tracy-extensions": "^0.2",
+    "friendsofphp/php-cs-fixer": "^3.64",
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^11",
-    "friendsofphp/php-cs-fixer": "^3.64",
-    "flightphp/tracy-extensions": "^0.2"
+    "rector/rector": "^2.1",
+    "zircote/swagger-php": "^6.0"
   },
   "autoload": {
     "psr-4": {
@@ -59,7 +60,11 @@
     "rector:dry": "vendor/bin/rector --dry-run --clear-cache",
     "rector:fix": "vendor/bin/rector --clear-cache",
     "lint": "vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes --config=.php-cs-fixer.php",
-    "lint:fix": "vendor/bin/php-cs-fixer fix --allow-risky=yes --config=.php-cs-fixer.php"
+    "lint:fix": "vendor/bin/php-cs-fixer fix --allow-risky=yes --config=.php-cs-fixer.php",
+    "docs:generate": [
+      "vendor/bin/openapi app -o public/api-docs/openapi.json --format json",
+      "@php -r \"echo '[docs:generate] Spec generado en public/api-docs/openapi.json' . PHP_EOL;\""
+    ]
   },
   "config": {
     "process-timeout": 0,
