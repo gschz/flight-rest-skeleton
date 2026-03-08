@@ -10,6 +10,7 @@ use app\utils\JwtService;
 use app\utils\Validator;
 use flight\Engine;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use OpenApi\Attributes as OA;
 use Respect\Validation\Validator as v;
 use Throwable;
 
@@ -19,6 +20,10 @@ use Throwable;
  * Gestiona el login, refresco de token y logout.
  * Las rutas de este controlador son públicas — no requieren AuthMiddleware.
  */
+#[OA\Tag(
+    name: 'Auth',
+    description: 'Autenticación JWT — login, refresh y logout'
+)]
 class AuthController
 {
     private const string INTERNAL_ERROR_MSG = 'Error interno del servidor';
@@ -39,6 +44,72 @@ class AuthController
      * POST /api/v1/auth/login
      * Body: { email: string, password: string }
      */
+    #[OA\Post(path: '/api/v1/auth/login', summary: 'Inicia sesión y obtiene tokens JWT', requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['email', 'password'],
+            properties: [
+                new OA\Property(
+                    property: 'email',
+                    type: 'string',
+                    format: 'email',
+                    example: 'admin@example.com'
+                ),
+                new OA\Property(
+                    property: 'password',
+                    type: 'string',
+                    format: 'password',
+                    example: 'secret'
+                ),
+            ]
+        )
+    ), tags: ['Auth'], responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Login exitoso',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(
+                        property: 'success',
+                        type: 'boolean',
+                        example: true
+                    ),
+                    new OA\Property(
+                        property: 'data',
+                        properties: [
+                            new OA\Property(
+                                property: 'access_token',
+                                type: 'string'
+                            ),
+                            new OA\Property(
+                                property: 'refresh_token',
+                                type: 'string'
+                            ),
+                            new OA\Property(
+                                property: 'token_type',
+                                type: 'string',
+                                example: 'Bearer'
+                            ),
+                            new OA\Property(
+                                property: 'expires_in',
+                                type: 'integer',
+                                example: 3600
+                            ),
+                        ],
+                        type: 'object'
+                    ),
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Credenciales incorrectas'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Datos de entrada inválidos'
+        ),
+    ])]
     public function login(): void
     {
         $data = $this->app->request()->data->getData();
@@ -131,6 +202,61 @@ class AuthController
      * POST /api/v1/auth/refresh
      * Body: { refresh_token: string }
      */
+    #[OA\Post(path: '/api/v1/auth/refresh', summary: 'Renueva el access token usando un refresh token válido', requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['refresh_token'],
+            properties: [
+                new OA\Property(
+                    property: 'refresh_token',
+                    type: 'string',
+                    example: 'abc123...'
+                ),
+            ]
+        )
+    ), tags: ['Auth'], responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Token renovado correctamente',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(
+                        property: 'success',
+                        type: 'boolean',
+                        example: true
+                    ),
+                    new OA\Property(
+                        property: 'data',
+                        properties: [
+                            new OA\Property(
+                                property: 'access_token',
+                                type: 'string'
+                            ),
+                            new OA\Property(
+                                property: 'token_type',
+                                type: 'string',
+                                example: 'Bearer'
+                            ),
+                            new OA\Property(
+                                property: 'expires_in',
+                                type: 'integer',
+                                example: 3600
+                            ),
+                        ],
+                        type: 'object'
+                    ),
+                ]
+            )
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Refresh token inválido o expirado'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Datos de entrada inválidos'
+        ),
+    ])]
     public function refresh(): void
     {
         $data = $this->app->request()->data->getData();
@@ -209,6 +335,28 @@ class AuthController
      * POST /api/v1/auth/logout
      * Body: { refresh_token: string }
      */
+    #[OA\Post(path: '/api/v1/auth/logout', summary: 'Cierra sesión revocando el refresh token', requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['refresh_token'],
+            properties: [
+                new OA\Property(
+                    property: 'refresh_token',
+                    type: 'string',
+                    example: 'abc123...'
+                ),
+            ]
+        )
+    ), tags: ['Auth'], responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Sesión cerrada correctamente'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Datos de entrada inválidos'
+        ),
+    ])]
     public function logout(): void
     {
         $data = $this->app->request()->data->getData();
