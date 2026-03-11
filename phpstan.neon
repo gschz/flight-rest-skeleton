@@ -6,4 +6,5 @@ parameters:
         - database
     excludePaths:
         - vendor
+        - app/views
     phpVersion: 80400
