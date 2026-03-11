@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\controllers\DocsController;
+use app\controllers\WelcomeController;
 use flight\net\Router;
 
 /**
@@ -13,10 +14,7 @@ use flight\net\Router;
  * @var Router $router
  */
 
-$router->get('/', function (): void {
-    $app = Flight::app();
-    $app->render('welcome', ['title' => 'Bienvenido a FlightPHP']);
-});
+$router->get('/', [WelcomeController::class, 'index']);
 
 $router->get('/health', function (): void {
     Flight::json([
