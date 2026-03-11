@@ -17,9 +17,11 @@ use flight\net\Router;
 $router->get('/', [WelcomeController::class, 'index']);
 
 $router->get('/health', function (): void {
+    // Endpoint público e idempotente — cacheable 60 s en cliente y proxies
+    Flight::app()->response()->header('Cache-Control', 'public, max-age=60, s-maxage=60');
     Flight::json([
-        'status' => 'ok',
-        'message' => 'Servicio operativo',
+        'status'    => 'ok',
+        'message'   => 'Servicio operativo',
         'timestamp' => date('c'),
     ]);
 });
