@@ -1,7 +1,7 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
   "name": "gschz/flight-rest-skeleton",
-  "description": "Pure REST API Skeleton for FlightPHP v3 with Eloquent, Phinx, and Best Practices.",
+  "description": "REST API skeleton para FlightPHP v3 — JWT auth, OpenAPI 3.0, Eloquent ORM, Phinx migrations y buenas prácticas production-ready.",
   "type": "project",
   "keywords": [
     "flightphp",
