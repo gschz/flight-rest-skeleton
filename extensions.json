@@ -1,0 +1,14 @@
+{
+  // --- Recommended Extensions ---
+  // Install all at once: Ctrl+Shift+P → "Show Recommended Extensions"
+  "recommendations": [
+    // PHP formatter and IntelliSense — required for editor.defaultFormatter in settings.json
+    "bmewburn.vscode-intelephense-client",
+
+    // Displays inline parameter names on function calls for readability
+    "robertostermann.inline-parameters-extended",
+
+    // SQLite viewer for inspecting database/database.sqlite3 during local development
+    "qwtel.sqlite-viewer"
+  ]
+}
