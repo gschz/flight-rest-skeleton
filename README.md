@@ -303,3 +303,20 @@ open http://localhost:8000/docs/redoc
 
 Este proyecto está listo para desplegarse en Heroku sin configuración adicional.
 Ver la guía completa de deploy y operaciones en [docs/HEROKU_OPERATIONS.md](docs/HEROKU_OPERATIONS.md).
+
+Variables recomendadas en producción:
+
+- `APP_ENV=production`
+- `APP_DEBUG=0`
+- `APP_KEY=<secreto>`
+- `JWT_SECRET=<secreto>`
+- `JWT_TTL=3600`
+- `JWT_REFRESH_TTL=604800`
+- `CORS_ALLOWED_ORIGINS=*` (o una lista explícita)
+- `LOG_LEVEL=error`
+
+Notas operativas clave:
+
+- `DATABASE_URL` la configura automáticamente el addon de Heroku Postgres.
+- El `release` de [Procfile](Procfile) ejecuta `php bin/migrate-if-production.php`, que corre `phinx migrate` en cada release.
+- Un deploy o release **no reinicia ni borra** los datos de Heroku Postgres; los datos persisten entre deploys.

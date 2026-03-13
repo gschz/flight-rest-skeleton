@@ -404,8 +404,10 @@ final class ApiEndpointsTest extends TestCase
         // El archivo openapi.json no existe en el entorno de tests
         $specPath = __DIR__ . '/../../public/api-docs/openapi.json';
         $existed  = file_exists($specPath);
+        $backupPath = null;
         if ($existed) {
-            rename($specPath, $specPath . '.bak');
+            $backupPath = $specPath . '.bak.' . uniqid('', true);
+            rename($specPath, $backupPath);
         }
 
         try {
@@ -420,8 +422,8 @@ final class ApiEndpointsTest extends TestCase
             $json = json_decode($body, true);
             self::assertFalse($json['success'] ?? true);
         } finally {
-            if ($existed) {
-                rename($specPath . '.bak', $specPath);
+            if ($existed && is_string($backupPath) && file_exists($backupPath)) {
+                rename($backupPath, $specPath);
             }
         }
     }

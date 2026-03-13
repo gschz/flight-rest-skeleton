@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\utils\JwtService;
+use Firebase\JWT\JWT;
 use PHPUnit\Framework\TestCase;
 
 final class SmokeTest extends TestCase
@@ -37,20 +38,23 @@ final class SmokeTest extends TestCase
 
     public function testJwtServiceDecodeExpiredToken(): void
     {
-        putenv('JWT_SECRET=' . str_repeat('a', 32));
-        putenv('JWT_TTL=1'); // TTL de 1 segundo
+        $secret = str_repeat('a', 32);
+        putenv('JWT_SECRET=' . $secret);
 
-        $service = new JwtService();
-        $token   = $service->encode($service->generatePayload(1));
-
-        // Avanzar el tiempo forzando expiración simulando manualmente
-        // firebase/php-jwt usa time() internamente; verificamos que decode lanza RuntimeException
-        // cuando el token ya expiró (en este caso usamos un token pre-fabricado con exp en el pasado)
-        putenv('JWT_SECRET=' . str_repeat('b', 32)); // secreto distinto → firma inválida
+        // Token pre-fabricado con exp en el pasado para validar expiración real.
+        $token = JWT::encode([
+            'sub' => 1,
+            'role' => 'user',
+            'type' => 'access',
+            'iat' => time() - 120,
+            'exp' => time() - 60,
+        ], $secret, 'HS256');
 
         self::expectException(RuntimeException::class);
-        $service2 = new JwtService();
-        $service2->decode($token);
+        self::expectExceptionMessage('Token expirado');
+
+        $service = new JwtService();
+        $service->decode($token);
     }
 
     public function testJwtServiceGenerateRefreshToken(): void

@@ -28,7 +28,13 @@ heroku addons:create heroku-postgresql:essential-0
 heroku config:set APP_ENV=production
 heroku config:set APP_DEBUG=0
 heroku config:set APP_KEY=$(php -r '$b = base64_encode(random_bytes(32)); echo "base64:$b";')
+heroku config:set JWT_SECRET=$(php -r 'echo bin2hex(random_bytes(32));')
+heroku config:set JWT_TTL=3600
+heroku config:set JWT_REFRESH_TTL=604800
 heroku config:set CORS_ALLOWED_ORIGINS=*
+heroku config:set RATE_LIMIT_ENABLED=true
+heroku config:set RATE_LIMIT_MAX_REQUESTS=60
+heroku config:set RATE_LIMIT_WINDOW_SECONDS=60
 heroku config:set LOG_LEVEL=error
 
 # Deploy
@@ -45,14 +51,20 @@ heroku logs --tail
 
 ### Variables de entorno requeridas
 
-| Variable               | Descripción                      | Cómo setearla                              |
-| ---------------------- | -------------------------------- | ------------------------------------------ |
-| `DATABASE_URL`         | DSN de PostgreSQL                | Seteada automáticamente por el addon       |
-| `APP_ENV`              | Entorno de la aplicación         | `heroku config:set APP_ENV=production`     |
-| `APP_KEY`              | Clave secreta de la aplicación   | Ver comando arriba                         |
-| `APP_DEBUG`            | Modo debug (false en producción) | `heroku config:set APP_DEBUG=0`            |
-| `CORS_ALLOWED_ORIGINS` | Orígenes CORS permitidos         | `heroku config:set CORS_ALLOWED_ORIGINS=*` |
-| `LOG_LEVEL`            | Nivel de logging                 | `heroku config:set LOG_LEVEL=error`        |
+| Variable                    | Descripción                                              |
+| --------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`              | DSN de PostgreSQL (seteada automáticamente por el addon) |
+| `APP_ENV`                   | Entorno de la aplicación                                 |
+| `APP_KEY`                   | Clave secreta de la aplicación                           |
+| `APP_DEBUG`                 | Modo debug (false en producción)                         |
+| `JWT_SECRET`                | Clave de firma para JWT (mínimo 32 bytes)                |
+| `JWT_TTL`                   | TTL del access token en segundos                         |
+| `JWT_REFRESH_TTL`           | TTL del refresh token en segundos                        |
+| `CORS_ALLOWED_ORIGINS`      | Orígenes CORS permitidos                                 |
+| `RATE_LIMIT_ENABLED`        | Activa/desactiva rate limiting                           |
+| `RATE_LIMIT_MAX_REQUESTS`   | Máximo de requests por ventana                           |
+| `RATE_LIMIT_WINDOW_SECONDS` | Duración de la ventana en segundos                       |
+| `LOG_LEVEL`                 | Nivel de logging                                         |
 
 ---
 
@@ -89,7 +101,7 @@ heroku config:get APP_ENV
 heroku config:set APP_KEY=base64:...
 
 # Setear múltiples variables a la vez
-heroku config:set APP_ENV=production APP_DEBUG=0 LOG_LEVEL=error
+heroku config:set APP_ENV=production APP_DEBUG=0 JWT_TTL=3600 JWT_REFRESH_TTL=604800 LOG_LEVEL=error
 
 # Eliminar una variable
 heroku config:unset MI_VARIABLE
@@ -170,6 +182,20 @@ heroku pg:backups:download
 # Restaurar desde un backup
 heroku pg:backups:restore <BACKUP_ID> DATABASE_URL
 ```
+
+### Persistencia entre deploys
+
+> [!IMPORTANT]
+> Un `git push heroku main` **no borra** los datos existentes en Heroku Postgres.
+> El deploy reemplaza el slug/dyno de aplicación, pero la base de datos es un servicio
+> persistente separado y mantiene los registros entre releases.
+
+Solo perderás datos si ocurre una acción destructiva explícita:
+
+- destruir/recrear el addon (`heroku addons:destroy ...`)
+- promover una base vacía a `DATABASE_URL`
+- ejecutar migraciones destructivas (`drop/truncate`) o rollback agresivo
+- correr seeds que sobrescriban/eliminen datos reales
 
 ---
 
