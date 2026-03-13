@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\controllers\DocsController;
+use app\controllers\WelcomeController;
 use flight\net\Router;
 
 /**
@@ -13,15 +14,14 @@ use flight\net\Router;
  * @var Router $router
  */
 
-$router->get('/', function (): void {
-    $app = Flight::app();
-    $app->render('welcome', ['title' => 'Bienvenido a FlightPHP']);
-});
+$router->get('/', [WelcomeController::class, 'index']);
 
 $router->get('/health', function (): void {
+    // Endpoint público e idempotente — cacheable 60 s en cliente y proxies
+    Flight::app()->response()->header('Cache-Control', 'public, max-age=60, s-maxage=60');
     Flight::json([
-        'status' => 'ok',
-        'message' => 'Servicio operativo',
+        'status'    => 'ok',
+        'message'   => 'Servicio operativo',
         'timestamp' => date('c'),
     ]);
 });

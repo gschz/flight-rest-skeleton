@@ -26,5 +26,7 @@ class SecurityHeadersMiddleware
         // For REST APIs there's no document-level CSP needed,
         // but we still disallow framing and inline scripts to harden any error pages.
         $this->app->response()->header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+        // Las rutas de API devuelven datos autenticados y específicos por usuario — nunca cachear
+        $this->app->response()->header('Cache-Control', 'no-store');
     }
 }

@@ -1,9 +1,9 @@
 {
   "name": "flight-rest-skeleton",
-  "description": "Pure REST API Skeleton for FlightPHP v3 with Eloquent, Phinx, and Best Practices.",
+  "description": "Production-ready FlightPHP v3 REST skeleton with JWT auth, OpenAPI, Eloquent ORM, and Phinx migrations.",
   "repository": "https://github.com/gschz/flight-rest-skeleton",
   "logo": "https://avatars.githubusercontent.com/u/1542353",
-  "keywords": ["php", "rest-api", "flightphp", "skeleton"],
+  "keywords": ["php", "rest-api", "flightphp", "jwt", "openapi", "skeleton"],
   "env": {
     "APP_ENV": {
       "description": "Entorno de la aplicación",
@@ -17,9 +17,33 @@
       "description": "Clave secreta de la aplicación. Generar con: php -r '$b = base64_encode(random_bytes(32)); echo \"base64:$b\";'",
       "generator": "secret"
     },
+    "JWT_SECRET": {
+      "description": "Clave secreta para firmar JWT (minimo 32 bytes).",
+      "generator": "secret"
+    },
+    "JWT_TTL": {
+      "description": "TTL del access token en segundos",
+      "value": "3600"
+    },
+    "JWT_REFRESH_TTL": {
+      "description": "TTL del refresh token en segundos",
+      "value": "604800"
+    },
     "CORS_ALLOWED_ORIGINS": {
       "description": "Lista de orígenes CORS permitidos separados por coma, o * para todos",
       "value": "*"
+    },
+    "RATE_LIMIT_ENABLED": {
+      "description": "Activa/desactiva rate limiting por IP",
+      "value": "true"
+    },
+    "RATE_LIMIT_MAX_REQUESTS": {
+      "description": "Maximo de requests permitidos por ventana",
+      "value": "60"
+    },
+    "RATE_LIMIT_WINDOW_SECONDS": {
+      "description": "Duracion de la ventana de rate limiting en segundos",
+      "value": "60"
     },
     "LOG_LEVEL": {
       "description": "Nivel de log: debug, info, warning, error",
@@ -36,8 +60,5 @@
     {
       "url": "heroku/php"
     }
-  ],
-  "scripts": {
-    "postdeploy": "composer db:migrate"
-  }
+  ]
 }

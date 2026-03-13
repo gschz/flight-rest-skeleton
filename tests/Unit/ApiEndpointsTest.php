@@ -354,13 +354,182 @@ final class ApiEndpointsTest extends TestCase
         self::assertSame(3, $json['data']['id'] ?? null);
     }
 
-    private function dispatch(string $method, string $uri, array $post = [], bool $withAuth = true): array
+    public function testCreateUserDuplicateEmail(): void
     {
+        [$status, $body] = $this->dispatch(
+            'POST',
+            '/api/v1/users',
+            [
+                'name'  => 'Duplicate',
+                'email' => 'bob@example.com', // ya existe en setUp
+            ]
+        );
+
+        // Debe rechazar con 409 Conflict o 422 Unprocessable
+        self::assertContains($status, [409, 422]);
+        $json = json_decode($body, true);
+        self::assertFalse($json['success'] ?? true);
+    }
+
+    public function testUpdateUserNotFound(): void
+    {
+        [$status, $body] = $this->dispatch(
+            'PUT',
+            '/api/v1/users/999',
+            [
+                'name'  => 'Ghost',
+                'email' => 'ghost@example.com',
+            ]
+        );
+
+        self::assertSame(404, $status);
+        $json = json_decode($body, true);
+        self::assertFalse($json['success'] ?? true);
+    }
+
+    public function testDeleteUserNotFound(): void
+    {
+        [$status, $body] = $this->dispatch(
+            'DELETE',
+            '/api/v1/users/999'
+        );
+
+        self::assertSame(404, $status);
+        $json = json_decode($body, true);
+        self::assertFalse($json['success'] ?? true);
+    }
+
+    public function testDocsSpecNotFound(): void
+    {
+        // El archivo openapi.json no existe en el entorno de tests
+        $specPath = __DIR__ . '/../../public/api-docs/openapi.json';
+        $existed  = file_exists($specPath);
+        $backupPath = null;
+        if ($existed) {
+            $backupPath = $specPath . '.bak.' . uniqid('', true);
+            rename($specPath, $backupPath);
+        }
+
+        try {
+            [$status, $body] = $this->dispatch(
+                'GET',
+                '/api-docs/openapi.json',
+                [],
+                false
+            );
+
+            self::assertSame(404, $status);
+            $json = json_decode($body, true);
+            self::assertFalse($json['success'] ?? true);
+        } finally {
+            if ($existed && is_string($backupPath) && file_exists($backupPath)) {
+                rename($backupPath, $specPath);
+            }
+        }
+    }
+
+    public function testDocsSpecServedWhenExists(): void
+    {
+        $specPath = __DIR__ . '/../../public/api-docs/openapi.json';
+        $created  = false;
+
+        if (!file_exists($specPath)) {
+            file_put_contents($specPath, json_encode([
+                'openapi' => '3.0.0',
+                'info' => ['title' => 'Test', 'version' => '1.0.0'],
+                'paths' => []
+            ]));
+            $created = true;
+        }
+
+        try {
+            [$status,, $headers] = $this->dispatch(
+                'GET',
+                '/api-docs/openapi.json',
+                [],
+                false
+            );
+
+            self::assertSame(200, $status);
+            self::assertArrayHasKey('Content-Type', $headers);
+            self::assertStringContainsString(
+                'application/json',
+                (string) ($headers['Content-Type'] ?? '')
+            );
+            self::assertSame(
+                'no-store',
+                $headers['Cache-Control'] ?? null
+            );
+        } finally {
+            if ($created) {
+                unlink($specPath);
+            }
+        }
+    }
+
+    public function testDocsSwaggerUI(): void
+    {
+        [$status, $body] = $this->dispatchWithViews(
+            'GET',
+            '/docs',
+            [],
+            false
+        );
+
+        self::assertSame(200, $status);
+        self::assertStringContainsString('swagger', strtolower($body));
+    }
+
+    public function testDocsRedoc(): void
+    {
+        [$status, $body] = $this->dispatchWithViews(
+            'GET',
+            '/docs/redoc',
+            [],
+            false
+        );
+
+        self::assertSame(200, $status);
+        self::assertStringContainsString('redoc', strtolower($body));
+    }
+
+    /**
+     * Despacha una petición con la ruta de vistas configurada (para endpoints que renderizan HTML).
+     *
+     * @param array<string, mixed> $post
+     * @return array{0: int, 1: string, 2: array<string, string>}
+     */
+    private function dispatchWithViews(
+        string $method,
+        string $uri,
+        array $post = [],
+        bool $withAuth = true
+    ): array {
+        return $this->dispatch(
+            $method,
+            $uri,
+            $post,
+            $withAuth,
+            __DIR__ . '/../../app/views'
+        );
+    }
+
+    private function dispatch(
+        string $method,
+        string $uri,
+        array $post = [],
+        bool $withAuth = true,
+        string $viewsPath = ''
+    ): array {
         $engine = new Engine();
         Flight::setEngine($engine);
 
         $engine->set('flight.handle_errors', false);
         $engine->set('flight.content_length', false);
+
+        if ($viewsPath !== '') {
+            $engine->set('flight.views.path', $viewsPath);
+        }
 
         $app    = $engine;
         $router = $app->router();

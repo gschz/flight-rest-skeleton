@@ -39,6 +39,11 @@ if (!isset($app) || !$app instanceof Engine) {
 define('PROJECT_ROOT', realpath(__DIR__ . '/../..') ?: __DIR__ . '/../..');
 $app->path(PROJECT_ROOT);
 
+// Cargar helpers globales — necesarios en CLI (Runway) y en web
+if (!function_exists('html_escape')) {
+    require __DIR__ . '/../utils/helpers.php';
+}
+
 // Set view path
 $app->set('flight.views.path', PROJECT_ROOT . '/app/views');
 
